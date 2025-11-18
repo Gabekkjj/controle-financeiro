@@ -9,7 +9,7 @@
 
 <p>
     Uma solução robusta e minimalista para gestão financeira, desenvolvida com foco em integridade de dados, 
-    segurança e experiência do usuário. Projeto acadêmico da disciplina de Tópicos Especiais.
+    segurança e experiência do usuário. Projeto acadêmico da disciplina de Tópicos Especiais em Desenvolvimento de Software.
 </p>
 
 <br>
