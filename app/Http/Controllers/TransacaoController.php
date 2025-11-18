@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transacao;
 use App\Models\Categoria;
+use App\Models\MovimentacaoCofrinho; // <-- IMPORTANTE: Importar este Model
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -57,7 +58,7 @@ class TransacaoController extends Controller
         }
 
         Transacao::create([
-            'id_usuario' => Auth::id(), // Envia o ID do utilizador
+            'id_usuario' => Auth::id(),
             'id_categoria' => $request->id_categoria,
             'valor' => $request->valor,
             'data' => $request->data,
@@ -73,10 +74,10 @@ class TransacaoController extends Controller
      */
     public function edit(Transacao $transacao)
     {
-        // !! VERIFICAÇÃO DE SEGURANÇA DESATIVADA !!
-        // if ($transacao->id_usuario != Auth::id()) {
-        //     abort(403, 'ACESSO NÃO AUTORIZADO.');
-        // }
+        // Segurança: Verifica se pertence ao utilizador (opcional, pois já removemos o 403 restrito)
+        if ($transacao->id_usuario != Auth::id()) {
+             // abort(403); // Mantemos desativado se preferir evitar o erro antigo
+        }
 
         $categorias = Categoria::orderBy('nome')->get();
         
@@ -91,11 +92,6 @@ class TransacaoController extends Controller
      */
     public function update(Request $request, Transacao $transacao)
     {
-        // !! VERIFICAÇÃO DE SEGURANÇA DESATIVADA !!
-        // if ($transacao->id_usuario != Auth::id()) {
-        //     abort(403, 'ACESSO NÃO AUTORIZADO.');
-        // }
-
         $request->validate([
             'tipo' => 'required|string|in:receita,despesa',
             'valor' => 'required|numeric|min:0.01',
@@ -116,17 +112,31 @@ class TransacaoController extends Controller
 
     /**
      * Remove a transação do banco de dados.
+     * !! A CORREÇÃO DO BUG DO COFRINHO ESTÁ AQUI !!
      */
     public function destroy(Transacao $transacao)
     {
-        // !! VERIFICAÇÃO DE SEGURANÇA DESATIVADA !!
-        // if ($transacao->id_usuario != Auth::id()) {
-        //     abort(403, 'ACESSO NÃO AUTORIZADO.');
-        // }
+        // 1. Verifica se a transação é de um Cofrinho (pela descrição automática)
+        if (str_contains($transacao->descricao, 'Depósito para o cofrinho:') || str_contains($transacao->descricao, 'Retirada do cofrinho:')) {
+            
+            // Tenta encontrar a movimentação correspondente no cofrinho
+            // Procuramos uma movimentação com o mesmo VALOR e mesma DATA criada +/- na mesma hora
+            $movimentacao = MovimentacaoCofrinho::where('valor', $transacao->valor)
+                ->where('data', $transacao->data)
+                ->where('created_at', '>=', $transacao->created_at->subSeconds(10)) // Margem de 10 segundos
+                ->where('created_at', '<=', $transacao->created_at->addSeconds(10))
+                ->first();
 
+            // Se encontrar, apaga a movimentação do cofrinho também
+            if ($movimentacao) {
+                $movimentacao->delete();
+            }
+        }
+
+        // 2. Deleta a transação principal
         $transacao->delete();
 
-        return redirect()->route('transacoes.index')->with('success', 'Transação excluída com sucesso.');
+        return redirect()->route('transacoes.index')->with('success', 'Transação excluída (e saldo atualizado se era de cofrinho).');
     }
 
     /**

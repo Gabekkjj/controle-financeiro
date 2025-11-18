@@ -3,26 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cofrinho;
-use App\Models\Transacao; // Precisamos criar transações normais
-use App\Models\Categoria; // Precisamos da categoria "Transferência"
+use App\Models\Transacao; // Importante
+use App\Models\Categoria; 
 use App\Models\MovimentacaoCofrinho;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; // Para fazer transações de BD seguras
+use Illuminate\Support\Facades\DB; 
 
 class CofrinhoController extends Controller
 {
-    /**
-     * Mostra uma lista de todos os cofrinhos do utilizador.
-     */
     public function index()
     {
         $cofrinhos = Auth::user()->cofrinhos()->get();
 
-        // Vamos calcular o total guardado em todos os cofrinhos
         $totalGuardado = 0;
         foreach ($cofrinhos as $cofrinho) {
-            $totalGuardado += $cofrinho->saldo_atual; // Usamos a função 'getSaldoAtualAttribute' do Model
+            $totalGuardado += $cofrinho->saldo_atual;
         }
 
         return view('cofrinhos.index', [
@@ -31,17 +27,11 @@ class CofrinhoController extends Controller
         ]);
     }
 
-    /**
-     * Mostra o formulário para criar um novo cofrinho.
-     */
     public function create()
     {
         return view('cofrinhos.create');
     }
 
-    /**
-     * Salva o novo cofrinho na base de dados.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -57,17 +47,12 @@ class CofrinhoController extends Controller
         return redirect()->route('cofrinhos.index')->with('success', 'Cofrinho criado com sucesso!');
     }
 
-    /**
-     * Mostra os detalhes e o histórico de um cofrinho.
-     */
     public function show(Cofrinho $cofrinho)
     {
-        // Segurança: Garante que o cofrinho pertence ao utilizador logado
         if ($cofrinho->id_usuario != Auth::id()) {
             abort(403, 'Acesso Não Autorizado.');
         }
 
-        // Carrega as movimentações ordenadas
         $movimentacoes = $cofrinho->movimentacoes()->latest('data')->paginate(10);
 
         return view('cofrinhos.show', [
@@ -76,12 +61,8 @@ class CofrinhoController extends Controller
         ]);
     }
 
-    /**
-     * Mostra o formulário para editar o cofrinho (nome/meta).
-     */
     public function edit(Cofrinho $cofrinho)
     {
-        // Segurança
         if ($cofrinho->id_usuario != Auth::id()) {
             abort(403, 'Acesso Não Autorizado.');
         }
@@ -89,12 +70,8 @@ class CofrinhoController extends Controller
         return view('cofrinhos.edit', ['cofrinho' => $cofrinho]);
     }
 
-    /**
-     * Atualiza o cofrinho na base de dados.
-     */
     public function update(Request $request, Cofrinho $cofrinho)
     {
-        // Segurança
         if ($cofrinho->id_usuario != Auth::id()) {
             abort(403, 'Acesso Não Autorizado.');
         }
@@ -113,30 +90,36 @@ class CofrinhoController extends Controller
     }
 
     /**
-     * Apaga um cofrinho (e todo o dinheiro dele é perdido!).
+     * Apaga um cofrinho E remove as transações associadas do extrato.
+     * (A CORREÇÃO DO BUG ESTÁ AQUI)
      */
     public function destroy(Cofrinho $cofrinho)
     {
-        // Segurança
         if ($cofrinho->id_usuario != Auth::id()) {
             abort(403, 'Acesso Não Autorizado.');
         }
 
-        // (Nota: Numa app real, perguntaríamos se o utilizador quer mover o saldo de volta)
+        // 1. Apagar as transações do extrato principal ligadas a este cofrinho
+        // Procuramos por transações que tenham a descrição exata gerada pelo sistema
+        $nome = $cofrinho->nome;
+        
+        Transacao::where('id_usuario', Auth::id())
+            ->where(function($query) use ($nome) {
+                $query->where('descricao', 'Depósito para o cofrinho: ' . $nome)
+                      ->orWhere('descricao', 'Retirada do cofrinho: ' . $nome);
+            })
+            ->delete();
+
+        // 2. Apagar o cofrinho (o banco apaga as movimentações internas automaticamente)
         $cofrinho->delete();
 
-        return redirect()->route('cofrinhos.index')->with('success', 'Cofrinho excluído.');
+        return redirect()->route('cofrinhos.index')->with('success', 'Cofrinho excluído e saldo principal ajustado.');
     }
-
 
     // --- MÉTODOS ESPECIAIS (DEPOSITAR / RETIRAR) ---
 
-    /**
-     * Adiciona dinheiro ao cofrinho (e remove do saldo principal).
-     */
     public function depositar(Request $request, Cofrinho $cofrinho)
     {
-        // Segurança
         if ($cofrinho->id_usuario != Auth::id()) {
             abort(403, 'Acesso Não Autorizado.');
         }
@@ -148,24 +131,19 @@ class CofrinhoController extends Controller
 
         $valor = $request->valor;
 
-        // 1. Encontrar a categoria "Transferência" (ou criar se não existir)
-        // Esta é a categoria que será usada no seu extrato principal
         $categoriaTransferencia = Categoria::firstOrCreate(
             ['nome' => 'Transferência Cofrinho', 'tipo' => 'despesa'],
             ['nome' => 'Transferência Cofrinho', 'tipo' => 'despesa']
         );
 
-        // Usamos uma Transação de Base de Dados para garantir que as duas operações ocorrem
         DB::transaction(function () use ($cofrinho, $categoriaTransferencia, $valor, $request) {
             
-            // 2. Cria a movimentação de DEPÓSITO no cofrinho
             $cofrinho->movimentacoes()->create([
                 'tipo' => 'deposito',
                 'valor' => $valor,
                 'data' => $request->data,
             ]);
 
-            // 3. Cria a transação de DESPESA no saldo principal
             Transacao::create([
                 'id_usuario' => Auth::id(),
                 'id_categoria' => $categoriaTransferencia->id_categoria,
@@ -179,12 +157,8 @@ class CofrinhoController extends Controller
         return redirect()->route('cofrinhos.show', $cofrinho)->with('success', 'Dinheiro depositado!');
     }
 
-    /**
-     * Retira dinheiro do cofrinho (e adiciona ao saldo principal).
-     */
     public function retirar(Request $request, Cofrinho $cofrinho)
     {
-        // Segurança
         if ($cofrinho->id_usuario != Auth::id()) {
             abort(403, 'Acesso Não Autorizado.');
         }
@@ -196,28 +170,23 @@ class CofrinhoController extends Controller
 
         $valor = $request->valor;
 
-        // Validação extra: não pode retirar mais do que tem
         if ($valor > $cofrinho->saldo_atual) {
             return back()->with('error', 'Você não pode retirar mais dinheiro do que possui no cofrinho.');
         }
 
-        // 1. Encontrar a categoria "Transferência" (Receita)
         $categoriaTransferencia = Categoria::firstOrCreate(
             ['nome' => 'Transferência Cofrinho', 'tipo' => 'receita'],
             ['nome' => 'Transferência Cofrinho', 'tipo' => 'receita']
         );
 
-        // Transação de Base de Dados
         DB::transaction(function () use ($cofrinho, $categoriaTransferencia, $valor, $request) {
             
-            // 2. Cria a movimentação de RETIRADA no cofrinho
             $cofrinho->movimentacoes()->create([
                 'tipo' => 'retirada',
                 'valor' => $valor,
                 'data' => $request->data,
             ]);
 
-            // 3. Cria a transação de RECEITA no saldo principal
             Transacao::create([
                 'id_usuario' => Auth::id(),
                 'id_categoria' => $categoriaTransferencia->id_categoria,

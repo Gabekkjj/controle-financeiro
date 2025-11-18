@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoriaController; 
 use App\Http\Controllers\TransacaoController;
-use App\Http\Controllers\CofrinhoController; // Importa o novo controller
+use App\Http\Controllers\CofrinhoController;
 use App\Models\Transacao; 
 use Illuminate\Support\Facades\Auth; 
 
@@ -19,26 +19,30 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Rota do Dashboard (agora com lógica de backend)
+// Rota do Dashboard (Atualizada para o Layout Profissional)
 Route::get('/dashboard', function () {
     $userId = Auth::id();
 
-    // 1. Lógica para Calcular o Saldo (RF04)
-    $receitas = Transacao::where('id_usuario', $userId)->where('tipo', 'receita')->sum('valor');
-    $despesas = Transacao::where('id_usuario', $userId)->where('tipo', 'despesa')->sum('valor');
-    $saldo = $receitas - $despesas;
+    // 1. Calcular Totais Separados (Para os 3 Cards)
+    $totalReceitas = Transacao::where('id_usuario', $userId)->where('tipo', 'receita')->sum('valor');
+    $totalDespesas = Transacao::where('id_usuario', $userId)->where('tipo', 'despesa')->sum('valor');
+    
+    // O Saldo é a diferença
+    $saldo = $totalReceitas - $totalDespesas;
 
-    // 2. Lógica para Transações Recentes
+    // 2. Buscar as 5 Transações Mais Recentes
     $recentes = Transacao::where('id_usuario', $userId)
                             ->with('categoria') 
                             ->latest('data')    
                             ->limit(5)          
                             ->get();
     
-    // 3. Retorna a View com os dados
+    // 3. Enviar TUDO para a View
     return view('dashboard', [
-        'saldo' => $saldo,
-        'recentes' => $recentes
+        'totalReceitas' => $totalReceitas, // Envia total de Entradas
+        'totalDespesas' => $totalDespesas, // Envia total de Saídas
+        'saldo' => $saldo,                 // Envia o Saldo Final
+        'recentes' => $recentes            // Envia a lista
     ]);
 
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -50,20 +54,20 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // NOSSAS ROTAS DO PROJETO
+    // CRUD Categorias
     Route::resource('categorias', CategoriaController::class);
     
+    // CRUD Transações
     Route::resource('transacoes', TransacaoController::class)
-         ->parameters(['transacoes' => 'transacao']); // A correção do plural
+         ->parameters(['transacoes' => 'transacao']); 
          
-    // !! INÍCIO DO NOVO CÓDIGO DO COFRINHO !!
+    // CRUD Cofrinhos
     Route::resource('cofrinhos', CofrinhoController::class)
          ->parameters(['cofrinhos' => 'cofrinho']);
          
-    // Rotas para depositar e retirar
+    // Rotas Extras do Cofrinho (Depositar/Retirar)
     Route::post('/cofrinhos/{cofrinho}/depositar', [CofrinhoController::class, 'depositar'])->name('cofrinhos.depositar');
     Route::post('/cofrinhos/{cofrinho}/retirar', [CofrinhoController::class, 'retirar'])->name('cofrinhos.retirar');
-    // !! FIM DO NOVO CÓDIGO DO COFRINHO !!
 });
 
 // Arquivo de rotas de autenticação (login, registro)
