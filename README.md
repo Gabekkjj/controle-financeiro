@@ -1,59 +1,146 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema de Controle Financeiro Pessoal
 
-## About Laravel
+<p>Um sistema web completo para gestão de finanças pessoais, desenvolvido com foco em usabilidade, segurança e análise de dados.</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+</div>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Visão Geral do Projeto
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Este projeto foi desenvolvido como parte da disciplina de Tópicos Especiais, visando solucionar a dificuldade comum de organização financeira. O sistema permite o controle total de receitas e despesas, categorização inteligente e gestão de metas de economia através de Cofrinhos.
 
-## Learning Laravel
+Funcionalidades Principais
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Dashboard Analítico: Painel visual com cartões de resumo (Entradas, Saídas, Saldo) e gráficos interativos para análise rápida.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Gestão de Transações: CRUD completo de receitas e despesas, com validações de segurança e vínculo automático ao usuário logado.
 
-## Laravel Sponsors
+Cofrinhos (Metas): Funcionalidade exclusiva para criar objetivos de economia. Ao depositar no cofrinho, o saldo da conta principal é debitado automaticamente (e vice-versa), garantindo integridade contábil.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Categorização: Sistema flexível para criar e gerir categorias personalizadas (ex: Alimentação, Transporte).
 
-### Premium Partners
+Relatórios Visuais: Integração com Chart.js para visualização de gastos por categoria.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Interface: Design limpo, responsivo e profissional, construído com Tailwind CSS.
 
-## Contributing
+Segurança: Autenticação robusta, proteção CSRF e validação de propriedade de dados.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Tecnologias Utilizadas
 
-## Code of Conduct
+O projeto foi construído utilizando uma stack moderna e robusta:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Backend:
 
-## Security Vulnerabilities
+Laravel 12 (Framework PHP)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Eloquent ORM
 
-## License
+Banco de Dados:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+PostgreSQL
+
+Frontend:
+
+Blade Templates
+
+Tailwind CSS
+
+Alpine.js
+
+Chart.js
+
+SweetAlert2
+
+Ferramentas de Desenvolvimento:
+
+Laravel DebugBar
+
+Vite
+
+Instalação e Configuração
+
+Siga os passos abaixo para rodar o projeto na sua máquina local.
+
+Pré-requisitos
+
+PHP 8.2 ou superior
+
+Composer
+
+Node.js & NPM
+
+PostgreSQL
+
+Passo a Passo
+
+Clone o repositório:
+
+git clone [https://github.com/SEU-USUARIO/controle-financeiro.git](https://github.com/SEU-USUARIO/controle-financeiro.git)
+cd controle-financeiro
+
+
+Instale as dependências do Backend (PHP):
+
+composer install
+
+
+Instale as dependências do Frontend (JS/CSS):
+
+npm install
+
+
+Configure o ambiente:
+
+Duplique o arquivo .env.example e renomeie para .env.
+
+Configure as credenciais do seu banco de dados PostgreSQL:
+
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=controle_financeiro
+DB_USERNAME=seu_usuario
+DB_PASSWORD=sua_senha
+
+
+Gere a chave da aplicação:
+
+php artisan key:generate
+
+
+Execute as migrações:
+
+php artisan migrate
+
+
+Inicie o projeto:
+Você precisará de dois terminais abertos:
+
+Terminal 1 (Servidor PHP):
+
+php artisan serve
+
+
+Terminal 2 (Compilador de Assets):
+
+npm run dev
+
+
+Acesse: Abra http://127.0.0.1:8000 no seu navegador.
+
+Estrutura do Banco de Dados
+
+O projeto utiliza relacionamentos relacionais para garantir a integridade dos dados:
+
+Users: Tabela principal de autenticação.
+
+Categorias: Ligada ao Usuário (1:N).
+
+Transações: Ligada ao Usuário (1:N) e à Categoria (1:N).
+
+Cofrinhos: Ligada ao Usuário (1:N).
+
+Movimentações_Cofrinho: Histórico de depósitos/retiradas ligado ao Cofrinho (1:N).
+
+Desenvolvido por Gabriel.
