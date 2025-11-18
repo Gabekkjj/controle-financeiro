@@ -35,7 +35,7 @@ O diferencial técnico do projeto reside na implementação do módulo de **Cofr
 <h2 id="funcionalidades">Funcionalidades Principais</h2>
 
 ### Gestão Financeira
-* **Dashboard Analítico:** Visão macroeconômica com cartões de resumo (Entradas, Saídas, Saldo) e gráficos interativos para análise de tendências.
+* **Dashboard Analítico:** Visão macroeconômica com cartões de resumo (Entradas, Saídas, Saldo).
 * **Controle de Transações:** Sistema completo (CRUD) para registro de receitas e despesas, com validação estrita de tipos e categorias.
 
 ### Módulo de Economia (Cofrinhos)
